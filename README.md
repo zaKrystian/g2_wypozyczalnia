@@ -12,8 +12,7 @@ Podstawą systemu jest klasa bazowa Pojazd, z której dziedziczą wyspecjalizowa
 - Motocykl
 
 Kluczowe Funkcjonalności (MVP):
-Zarządzanie flotą: Funckja umożliżliwająca dodawanie nowych pojazdów do systemu oraz definiowanie ich parametrów. Dodatkowo samochody mogą być wypożyczone użytkownikom, którzy mają konta w systemie (trzeba założyć)
-
+Zarządzanie flotą: Funckja umożliżliwająca dodawanie nowych pojazdów do systemu oraz definiowanie ich parametrów. Dodatkowo samochody mogą być wypożyczone użytkownikom, którzy mają konta w systemie (trzeba założyć).
 Monitorowanie stanu : System śledzi status każdego pojazdu (np. dostępny, wypożyczony, serwisowany).
 Ewidencja przebiegu: aktualizacja oraz zmiana stanu licznika samochodu, zapis przed i po wypożyczeniu.
 Proces wypożyczenia i zwrotu: rejestracja momentu wydania pojazdu klientowi, jego stanu licznika oraz jego powrotu do bazy.
