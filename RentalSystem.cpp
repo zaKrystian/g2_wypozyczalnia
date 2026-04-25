@@ -1,4 +1,6 @@
 #include "RentalSystem.h"
+#include <fstream>
+#include <sstream>
 
 void RentalSystem::addVehicle(const Vehicle& v) {
     vehicles.push_back(v);
@@ -13,18 +15,18 @@ bool RentalSystem::rentVehicle(int vehicleId, int userId, std::string date) {
         if (v.id == vehicleId) {
             // Blokada: Serwis lub zajety
             if (v.status != Status::AVAILABLE) {
-                std::cout << "Error: Vehicle is not available!\n";
+                std::cout << "Błąd: Brak pojazdu! Status:\n";
                 return false;
             }
             if (v.needsService()) {
                 v.status = Status::MAINTENANCE;
-                std::cout << "Error: Vehicle requires maintenance!\n";
+                std::cout << "Błąd: Pojazd jest w serwisie!\n";
                 return false;
             }
 
             v.status = Status::RENTED;
             transactions.push_back(Transaction(nextTransactionId++, userId, vehicleId, date, v.mileage));
-            std::cout << "Vehicle " << v.brand << " rented successfully.\n";
+            std::cout << "Pojazd " << v.brand << " wypozyczony pomyślnie.\n";
             return true;
         }
     }
@@ -54,7 +56,7 @@ bool RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string 
                 }
             }
 
-            std::cout << "Return successful. Total cost: " << total << " (Extra fees: " << extraFee << ")\n";
+            std::cout << "Zwrot pomyślny. Total cost: " << total << " (Dodatkowe opłaty: " << extraFee << ")\n";
             return true;
         }
     }
@@ -62,10 +64,53 @@ bool RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string 
 }
 
 void RentalSystem::displayFleetStatus() const {
-    std::cout << "\n--- Current Fleet Status ---\n";
+    std::cout << "\n--- Obecny status floty ---\n";
     for (const auto &v : vehicles) {
-        std::string s = (v.status == Status::AVAILABLE) ? "Available" : 
-                        (v.status == Status::RENTED) ? "Rented" : "Maintenance";
-        std::cout << v.brand << " " << v.model << " | Mileage: " << v.mileage << " | Status: " << s << "\n";
+        std::string s = (v.status == Status::AVAILABLE) ? "Dostępny" : 
+                        (v.status == Status::RENTED) ? "Wypożyczony" : "W naprawie";
+        std::cout << v.brand << " " << v.model << " | Przebieg: " << v.mileage << " | Status: " << s << "\n";
     }
 }
+
+
+
+// Funkcja pomocnicza do parsowania linii CSV (opcjonalnie)
+void RentalSystem::loadVehiclesFromCSV(const std::string& filename) {
+    std::ifstream file(filename);
+    std::string line;
+
+    if (!file.is_open()) {
+        std::cerr << "Błąd: Nie można otworzyć pliku " << filename << std::endl;
+        return;
+    }
+
+    // Pomijamy nagłówek, jeśli istnieje w pliku
+    std::getline(file, line); 
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string item;
+        std::vector<std::string> row;
+
+        while (std::getline(ss, item, ',')) {
+            row.push_back(item);
+        }
+
+        // Zakładany format CSV: id,brand,model,year,mileage,serviceLimit,dailyRate
+        if (row.size() >= 7) {
+            Vehicle v(
+                std::stoi(row[0]), 
+                row[1], 
+                row[2], 
+                std::stoi(row[3]), 
+                std::stoi(row[4]), 
+                std::stoi(row[5]), 
+                std::stod(row[6])
+            );
+            addVehicle(v);
+        }
+    }
+    file.close();
+    std::cout << "Pomyślnie zaimportowano pojazdy z " << filename << "\n";
+}
+
