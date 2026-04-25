@@ -1,6 +1,5 @@
-#include "RentalSystem.h"
-#include <fstream>
-#include <sstream>
+ #include "RentalSystem.h"
+#include <iostream>
 
 void RentalSystem::addVehicle(const Vehicle& v) {
     vehicles.push_back(v);
@@ -11,44 +10,103 @@ void RentalSystem::addUser(const User& u) {
 }
 
 bool RentalSystem::rentVehicle(int vehicleId, int userId, std::string date) {
+    // 🔹 Szukanie użytkownika
+    const User* userPtr = nullptr;
+    for (const auto &u : users) {
+        if (u.getId() == userId) {
+            userPtr = &u;
+            break;
+        }
+    }
+
+    if (!userPtr) {
+        std::cout << "Błąd: Użytkownik nie istnieje!\n";
+        return false;
+    }
+
+    // 🔹 Limit aktywnych wypożyczeń (max 2)
+    int activeRentals = 0;
+    for (const auto &t : transactions) {
+        if (t.userId == userId && t.endMileage == 0) {
+            activeRentals++;
+        }
+    }
+
+    if (activeRentals >= 2) {
+        std::cout << "Błąd: Użytkownik osiągnął limit wypożyczeń (2 pojazdy)!\n";
+        return false;
+    }
+
+    // 🔹 Szukanie pojazdu
     for (auto &v : vehicles) {
         if (v.id == vehicleId) {
-            // Blokada: Serwis lub zajety
+
             if (v.status != Status::AVAILABLE) {
-                std::cout << "Błąd: Brak pojazdu! Status:\n";
+                std::cout << "Błąd: Pojazd nie jest dostępny!\n";
                 return false;
             }
+
             if (v.needsService()) {
                 v.status = Status::MAINTENANCE;
-                std::cout << "Błąd: Pojazd jest w serwisie!\n";
+                std::cout << "Błąd: Pojazd wymaga serwisu!\n";
                 return false;
             }
 
             v.status = Status::RENTED;
-            transactions.push_back(Transaction(nextTransactionId++, userId, vehicleId, date, v.mileage));
-            std::cout << "Pojazd " << v.brand << " wypozyczony pomyślnie.\n";
+            transactions.push_back(
+                Transaction(nextTransactionId++, userId, vehicleId, date, v.mileage)
+            );
+
+            std::cout << "Pojazd " << v.brand << " został wypożyczony pomyślnie.\n";
             return true;
         }
     }
+
+    std::cout << "Błąd: Nie znaleziono pojazdu!\n";
     return false;
 }
 
 bool RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string date, int days) {
     for (auto &v : vehicles) {
         if (v.id == vehicleId && v.status == Status::RENTED) {
+
             int distanceTraveled = currentMileage - v.mileage;
             double extraFee = 0;
 
-            // Logika kar za przebieg
+            // 🔹 kara za przekroczenie limitu
             if (distanceTraveled > v.mileageLimitPerRental) {
-                extraFee = (distanceTraveled - v.mileageLimitPerRental) * 2.0; // 2.0 za kazdy km ponad limit
+                extraFee = (distanceTraveled - v.mileageLimitPerRental) * 2.0;
             }
 
             double total = (days * v.dailyRate) + extraFee;
+
+            // 🔹 znajdź użytkownika do zniżki
+            int userId = -1;
+            for (auto &t : transactions) {
+                if (t.vehicleId == vehicleId && t.endMileage == 0) {
+                    userId = t.userId;
+                    break;
+                }
+            }
+
+            // 🔹 sprawdź czy premium
+            bool isPremium = false;
+            for (const auto &u : users) {
+                if (u.getId() == userId) {
+                    isPremium = u.getIsPremium();
+                    break;
+                }
+            }
+
+            // 🔹 zniżka 10% dla premium
+            if (isPremium) {
+                total *= 0.9;
+            }
+
             v.updateMileage(currentMileage);
             v.status = v.needsService() ? Status::MAINTENANCE : Status::AVAILABLE;
 
-            // Aktualizacja ostatniej transakcji dla tego auta
+            // 🔹 aktualizacja transakcji
             for (auto &t : transactions) {
                 if (t.vehicleId == vehicleId && t.endMileage == 0) {
                     t.completeTransaction(date, currentMileage, total, extraFee);
@@ -56,61 +114,30 @@ bool RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string 
                 }
             }
 
-            std::cout << "Zwrot pomyślny. Total cost: " << total << " (Dodatkowe opłaty: " << extraFee << ")\n";
+            std::cout << "Zwrot zakończony. Całkowity koszt: " << total
+                      << " (Dodatkowe opłaty: " << extraFee << ")";
+            
+            if (isPremium) {
+                std::cout << " [Zastosowano zniżkę premium]";
+            }
+
+            std::cout << "\n";
             return true;
-        }
+        } 
     }
+
+    std::cout << "Błąd: Nie znaleziono pojazdu lub nie jest wypożyczony!\n";
     return false;
 }
 
 void RentalSystem::displayFleetStatus() const {
-    std::cout << "\n--- Obecny status floty ---\n";
+    std::cout << "\n--- Aktualny stan floty ---\n";
     for (const auto &v : vehicles) {
         std::string s = (v.status == Status::AVAILABLE) ? "Dostępny" : 
-                        (v.status == Status::RENTED) ? "Wypożyczony" : "W naprawie";
-        std::cout << v.brand << " " << v.model << " | Przebieg: " << v.mileage << " | Status: " << s << "\n";
+                        (v.status == Status::RENTED) ? "Wypożyczony" : "Serwis";
+
+        std::cout << v.brand << " " << v.model
+                  << " | Przebieg: " << v.mileage
+                  << " | Status: " << s << "\n";
     }
 }
-
-
-
-// Funkcja pomocnicza do parsowania linii CSV (opcjonalnie)
-void RentalSystem::loadVehiclesFromCSV(const std::string& filename) {
-    std::ifstream file(filename);
-    std::string line;
-
-    if (!file.is_open()) {
-        std::cerr << "Błąd: Nie można otworzyć pliku " << filename << std::endl;
-        return;
-    }
-
-    // Pomijamy nagłówek, jeśli istnieje w pliku
-    std::getline(file, line); 
-
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string item;
-        std::vector<std::string> row;
-
-        while (std::getline(ss, item, ',')) {
-            row.push_back(item);
-        }
-
-        // Zakładany format CSV: id,brand,model,year,mileage,serviceLimit,dailyRate
-        if (row.size() >= 7) {
-            Vehicle v(
-                std::stoi(row[0]), 
-                row[1], 
-                row[2], 
-                std::stoi(row[3]), 
-                std::stoi(row[4]), 
-                std::stoi(row[5]), 
-                std::stod(row[6])
-            );
-            addVehicle(v);
-        }
-    }
-    file.close();
-    std::cout << "Pomyślnie zaimportowano pojazdy z " << filename << "\n";
-}
-
