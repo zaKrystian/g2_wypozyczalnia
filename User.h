@@ -10,6 +10,10 @@ public:
     bool isPremium;
 
     User(int id, std::string name, bool isPremium);
+    
+    int getId() const;
+    std::string getName() const;
+    bool getIsPremium() const;
 };
 
 #endif

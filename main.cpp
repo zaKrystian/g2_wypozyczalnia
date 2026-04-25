@@ -9,7 +9,7 @@ int main() {
     RentalSystem system;
 
     
-    system.loadVehiclesFromCSV("auta.csv");
+    system.loadVehiclesFromCSV("cars.csv");
     system.displayFleetStatus();
     system.rentVehicle(1, 1, "2026-04-26");
 
