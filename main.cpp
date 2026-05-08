@@ -50,7 +50,7 @@ int main() {
                 break;
 
             case 4:
-                cout << "Logika dodawania pojazdu..." << endl;
+                cout << "Logika dodawania pojazdu...." << endl;
                 break;
 
             case 5:
