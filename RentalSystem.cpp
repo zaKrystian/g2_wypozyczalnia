@@ -26,7 +26,6 @@ bool RentalSystem::rentVehicle(int vehicleId, int userId, std::string date) {
 
             v.status = Status::RENTED;
             transactions.push_back(Transaction(nextTransactionId++, userId, vehicleId, date, v.mileage));
-            std::cout << "Pojazd " << v.brand << " wypozyczony pomyślnie.\n";
             return true;
         }
     }
@@ -69,6 +68,24 @@ void RentalSystem::displayFleetStatus() const {
         std::string s = (v.status == Status::AVAILABLE) ? "Dostępny" : 
                         (v.status == Status::RENTED) ? "Wypożyczony" : "W naprawie";
         std::cout << v.brand << " " << v.model << " | Przebieg: " << v.mileage << " | Status: " << s << "\n";
+    }
+}
+
+void RentalSystem::displayFleetStatus(bool displayAvailable) const {
+    std::cout << "\n--- Dostępne opjazdy ---\n";
+    for (const auto &v : vehicles) {
+        if(v.status == Status::AVAILABLE){
+            std::cout << "ID: " << v.id << " | " << v.brand << " " << v.model << " | Przebieg: " << v.mileage << " \n";
+        }
+        else continue;
+        
+    }
+}
+
+void RentalSystem::displayUsers() const {
+    cout << "--- Lista Użytkowników ---" << endl;
+    for (const auto& user : users) {
+        cout << "ID: " << user.getId() << " | Imię: " << user.getName() << endl;
     }
 }
 
