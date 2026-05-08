@@ -42,7 +42,28 @@ int main() {
                 break;
 
             case 2:
-                system.rentVehicle(1, 1, "2026-05-08"); 
+                do {
+                    system.displayFleetStatus(true); // Wyświetla dostępne auta
+                    int rentID, userID;
+    
+                    cout << "> Podaj ID samochodu do wypożyczenia: ";
+                    cin >> rentID;
+
+                    system.displayUsers(); // Teraz zadziała bez argumentu
+                    cout << "> Podaj ID użytkownika: ";
+                    cin >> userID;
+
+                    // Przekazujemy zmienne rentID oraz userID zamiast sztywnych "1"
+                    
+                    if (system.rentVehicle(rentID, userID, "2026-05-08")) {
+                        cout << " # Sukces : Pojazd wypożyczony." << endl;
+                        break;
+                    } else {
+                        cout << " !- BŁĄD -!: Nie udało się wypożyczyć pojazdu. Spróbuj ponownie." << endl;
+                    }
+                } while (true);
+                
+                
                 break;
 
             case 3:
