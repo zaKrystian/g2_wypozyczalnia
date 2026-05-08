@@ -26,6 +26,8 @@ public:
     bool returnVehicle(int vehicleId, int currentMileage, string date, int days);
     
     void displayFleetStatus() const;
+    void displayFleetStatus(bool displayActive) const;
+    void displayUsers() const;
     void displayHistory() const;
 
     void loadVehiclesFromCSV(const string& filename);
