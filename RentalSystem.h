@@ -22,8 +22,8 @@ public:
     void addUser(const User& u);
     
     // MVP Logic
-    bool rentVehicle(int vehicleId, int userId, string date);
-    bool returnVehicle(int vehicleId, int currentMileage, string date, int days);
+    void rentVehicle(int vehicleId, int userId, std::string date);
+    void returnVehicle(int vehicleId, int currentMileage, string date, int days);
     
     void displayFleetStatus() const;
     void displayFleetStatus(bool displayActive) const;

@@ -1,7 +1,7 @@
 #include "RentalSystem.h"
 #include <iostream>
 #include <limits> 
-
+#include <stdexcept> 
 
 using namespace std;
 
@@ -15,8 +15,18 @@ void systemHalt() {
 int main() {
 
     RentalSystem system;
-    system.loadVehiclesFromCSV("data/cars.csv");
-    system.loadUsersFromCSV("data/users.csv");
+    
+    
+    try {
+        system.loadVehiclesFromCSV("data/cars.csv");
+        system.loadUsersFromCSV("data/users.csv");
+    } 
+    catch (const exception& e) {
+        cerr << " CRITICAL ERROR: Nie udalo sie zainicjalizowac bazy danych!" << endl;
+        cerr << " Szczegoly błędu: " << e.what() << endl;
+        cerr << " Program zostanie zamkniety." << endl;
+        return 1; 
+    }
 
     int chosenState;
     bool run = true;
@@ -35,11 +45,8 @@ int main() {
         cout << " 0) Konczenie dzialania programu" << endl;
         cout << "> WYBOR: ";
 
-    
         if (!(cin >> chosenState)) {
             cout << " !_ERROR_!: To nie jest liczba. Sprobuj ponownie." << endl;
-            
-            
             cin.clear(); 
             cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
             continue;
@@ -52,32 +59,67 @@ int main() {
                 break;
 
             case 2:
-                do {
-                    system.displayFleetStatus(true); // Wyświetla dostępne auta
+                
+                try {
+                    system.displayFleetStatus(true); 
                     int rentID, userID;
     
                     cout << "> Podaj ID samochodu do wypozyczenia: ";
-                    cin >> rentID;
+                    if (!(cin >> rentID)) throw invalid_argument("Niepoprawny format ID samochodu (musi byc liczba).");
 
-                    system.displayUsers(); // Teraz zadziała bez argumentu
+                    system.displayUsers(); 
                     cout << "> Podaj ID użytkownika: ";
-                    cin >> userID;
+                    if (!(cin >> userID)) throw invalid_argument("Niepoprawny format ID uzytkownika (musi byc liczba).");
 
-                    // Przekazujemy zmienne rentID oraz userID zamiast sztywnych "1"
                     
-                    if (system.rentVehicle(rentID, userID, "2026-05-08")) {
-                        cout << " #_SUKCES_# : Pojazd wypozyczony." << endl;
-                        break;
-                    } else {
-                        cout << " !_ERROR_!: Nie udalo sie wypozyczyc pojazdu. Sprobuj ponownie." << endl;
+                    system.rentVehicle(rentID, userID, "2026-05-08");
+                    cout << " #_SUKCES_# : Pojazd wypozyczony pomyślnie." << endl;
+                    
+                } 
+                catch (const invalid_argument& e) {
+                    
+                        cout << " !_ERROR_ danych wejściowych: " << e.what() << endl;
+                        cin.clear();
+                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
                     }
-                } while (true);
-                systemHalt();
+                    catch (const exception& e) {
+                    
+                        cout << " !_ERROR_ SYSTEMU: " << e.what() << endl;
+                    }
                 
+                systemHalt();
                 break;
 
             case 3:
-                cout << "Logika zwrotu pojazdu..." << endl;
+                try {
+                    int returnID, currentMileage, rentalDays;
+                    
+                    cout << "\n>--- Procedura Zwrotu Pojazdu ---<" << endl;
+                    cout << "> Podaj ID samochodu do zwrotu: ";
+                    if (!(cin >> returnID)) throw invalid_argument("Niepoprawny format ID samochodu (musi byc liczba).");
+
+                    cout << "> Podaj obecny stan licznika (przebieg): ";
+                    if (!(cin >> currentMileage)) throw invalid_argument("Niepoprawny format przebiegu (musi byc liczba).");
+
+                    cout << "> Podaj liczbe dni wypozyczenia: ";
+                    if (!(cin >> rentalDays)) throw invalid_argument("Niepoprawna liczba dni (musi byc liczba).");
+                    if (rentalDays <= 0) throw invalid_argument("Liczba dni musi byc wieksza od 0.");
+
+                    system.returnVehicle(returnID, currentMileage, "2026-05-08", rentalDays);
+                    
+                } 
+                catch (const invalid_argument& e) {
+                   
+                    cout << " !_ERROR_ danych wejściowych: " << e.what() << endl;
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                }
+                catch (const exception& e) {
+                   
+                    cout << " !_ERROR_ SYSTEMU ZWROTOW: " << e.what() << endl;
+                }
+
+                systemHalt();
                 break;
 
             case 4:
