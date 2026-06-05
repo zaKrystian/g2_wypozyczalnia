@@ -1,6 +1,10 @@
 #include "RentalSystem.h"
 #include <fstream>
 #include <sstream>
+#include <iostream>
+#include <stdexcept> // Potrzebne do rzucania wyjątków
+
+using namespace std;
 
 void RentalSystem::addVehicle(const Vehicle& v) {
     vehicles.push_back(v);
@@ -10,31 +14,57 @@ void RentalSystem::addUser(const User& u) {
     users.push_back(u);
 }
 
-bool RentalSystem::rentVehicle(int vehicleId, int userId, std::string date) {
+// Zmieniono typ zwracany na void - błędy są teraz wyjątkami
+void RentalSystem::rentVehicle(int vehicleId, int userId, std::string date) {
+    bool vehicleFound = false;
+
+    // Sprawdzamy najpierw, czy użytkownik w ogóle istnieje w systemie
+    bool userFound = false;
+    for (const auto &u : users) {
+        if (u.getId() == userId) {
+            userFound = true;
+            break;
+        }
+    }
+    if (!userFound) {
+        throw std::runtime_error("Uzytkownik o podanym ID nie istnieje w bazie.");
+    }
+
     for (auto &v : vehicles) {
         if (v.id == vehicleId) {
+            vehicleFound = true;
+
             // Blokada: Serwis lub zajety
             if (v.status != Status::AVAILABLE) {
-                std::cout << "!_ERROR_!: Brak pojazdu! Status:\n";
-                return false;
+                throw std::runtime_error("Pojazd nie jest dostepny (jest juz wypozyczony lub w naprawie).");
             }
             if (v.needsService()) {
                 v.status = Status::MAINTENANCE;
-                std::cout << "!_ERROR_!: Pojazd jest w serwisie!\n";
-                return false;
+                throw std::runtime_error("Pojazd wymaga natychmiastowego serwisu! Zmieniono status na MAINTENANCE.");
             }
 
+            // Jeśli wszystko OK:
             v.status = Status::RENTED;
             transactions.push_back(Transaction(nextTransactionId++, userId, vehicleId, date, v.mileage));
-            return true;
+            return; // Sukces, wychodzimy z metody
         }
     }
-    return false;
+
+    if (!vehicleFound) {
+        throw std::runtime_error("Pojazd o podanym ID nie istnieje w bazie.");
+    }
 }
 
-bool RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string date, int days) {
+void RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string date, int days) {
     for (auto &v : vehicles) {
-        if (v.id == vehicleId && v.status == Status::RENTED) {
+        if (v.id == vehicleId) {
+            if (v.status != Status::RENTED) {
+                throw std::runtime_error("Ten pojazd nie jest obecnie oznaczony jako wypozyczony.");
+            }
+            if (currentMileage < v.mileage) {
+                throw std::invalid_argument("Nowy przebieg nie moze byc mniejszy niz przebieg poczatkowy!");
+            }
+
             int distanceTraveled = currentMileage - v.mileage;
             double extraFee = 0;
 
@@ -56,10 +86,9 @@ bool RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string 
             }
 
             std::cout << " #_SUKCES_# :  Zwrot pomyslny. Calkowity koszt: " << total << " (Dodatkowe oplaty: " << extraFee << ")\n";
-            return true;
         }
     }
-    return false;
+    throw std::runtime_error("Nie znaleziono pojazdu o podanym ID.");
 }
 
 void RentalSystem::displayFleetStatus() const {
@@ -72,15 +101,13 @@ void RentalSystem::displayFleetStatus() const {
 }
 
 void RentalSystem::displayFleetStatus(bool displayAvailable) const {
-    std::cout << "\n>--- Dostepne pojazdy ---<" <<endl;
+    std::cout << "\n>--- Dostepne pojazdy ---<" << endl;
     for (const auto &v : vehicles) {
         if(v.status == Status::AVAILABLE){
             std::cout << "ID: " << v.id << " | " << v.brand << " " << v.model << " | Przebieg: " << v.mileage << " \n";
         }
-        else continue;
-        
     }
-    cout<<endl;
+    cout << endl;
 }
 
 void RentalSystem::displayUsers() const {
@@ -88,25 +115,22 @@ void RentalSystem::displayUsers() const {
     for (const auto& user : users) {
         cout << "ID: " << user.getId() << " | Imie: " << user.getName() << endl;
     }
-    cout<<endl;
+    cout << endl;
 }
 
-
-
-// Funkcja pomocnicza do parsowania linii CSV (opcjonalnie)
 void RentalSystem::loadVehiclesFromCSV(const std::string& filename) {
     std::ifstream file(filename);
     std::string line;
 
     if (!file.is_open()) {
-        std::cerr << "!_ERROR_! : Nie można otworzyć pliku " << filename << std::endl;
-        return;
+        // Zamiast std::cerr rzucamy wyjątek, który zamknie aplikację w main, jeśli krytyczne pliki znikną
+        throw std::runtime_error("Nie mozna otworzyc pliku bazy pojazdow: " + filename);
     }
 
-    // Pomijamy nagłówek, jeśli istnieje w pliku
     std::getline(file, line); 
 
     while (std::getline(file, line)) {
+        if (line.empty()) continue;
         std::stringstream ss(line);
         std::string item;
         std::vector<std::string> row;
@@ -115,18 +139,21 @@ void RentalSystem::loadVehiclesFromCSV(const std::string& filename) {
             row.push_back(item);
         }
 
-        // Zakładany format CSV: id,brand,model,year,mileage,serviceLimit,dailyRate
         if (row.size() >= 7) {
-            Vehicle v(
-                std::stoi(row[0]), 
-                row[1], 
-                row[2], 
-                std::stoi(row[3]), 
-                std::stoi(row[4]), 
-                std::stoi(row[5]), 
-                std::stod(row[6])
-            );
-            addVehicle(v);
+            try {
+                Vehicle v(
+                    std::stoi(row[0]), 
+                    row[1], 
+                    row[2], 
+                    std::stoi(row[3]), 
+                    std::stoi(row[4]), 
+                    std::stoi(row[5]), 
+                    std::stod(row[6])
+                );
+                addVehicle(v);
+            } catch (const std::exception& e) {
+                std::cerr << "!_WARNING_! : Blad parsowania pojazdu w linii: " << line << " (" << e.what() << ")" << std::endl;
+            }
         }
     }
     file.close();
@@ -138,11 +165,9 @@ void RentalSystem::loadUsersFromCSV(const std::string& filename) {
     std::string line;
 
     if (!file.is_open()) {
-        std::cerr << "!_ERROR_! : Nie można otworzyc pliku " << filename << std::endl;
-        return;
+        throw std::runtime_error("Nie mozna otworzyc pliku bazy uzytkownikow: " + filename);
     }
 
-    // Pomijamy nagłówek
     std::getline(file, line); 
 
     while (std::getline(file, line)) {
@@ -155,19 +180,16 @@ void RentalSystem::loadUsersFromCSV(const std::string& filename) {
             row.push_back(item);
         }
 
-        
         if (row.size() >= 3) {
             try {
                 int id = std::stoi(row[0]);
                 std::string name = row[1];
-                
-                
                 bool isPremium = (row[2] == "1" || row[2] == "true");
 
                 User u(id, name, isPremium);
                 addUser(u); 
             } catch (const std::exception& e) {
-                std::cerr << "!_ERROR_! : Blad parsowania linii: " << line << " (" << e.what() << ")" << std::endl;
+                std::cerr << "!_ERROR_! : Blad parsowania uzytkownika w linii: " << line << " (" << e.what() << ")" << std::endl;
             }
         }
     }
