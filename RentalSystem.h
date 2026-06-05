@@ -31,6 +31,7 @@ public:
     void displayHistory() const;
 
     void loadVehiclesFromCSV(const string& filename);
+    void loadUsersFromCSV(const string& filename);
 };
 
 #endif

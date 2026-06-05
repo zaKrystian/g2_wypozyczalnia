@@ -1,0 +1,5 @@
+id,brand,model,year,mileage,serviceLimit,dailyRate
+1,Tesla,Model 3,2023,10000,10500,200
+2,Ford,Mustang,2022,5000,15000,350
+3,Opel,Corsa,2004,300000,305000,400
+4,Seat,Ibiza 3,2006,350000,360000,500

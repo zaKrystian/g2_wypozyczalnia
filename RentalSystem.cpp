@@ -15,12 +15,12 @@ bool RentalSystem::rentVehicle(int vehicleId, int userId, std::string date) {
         if (v.id == vehicleId) {
             // Blokada: Serwis lub zajety
             if (v.status != Status::AVAILABLE) {
-                std::cout << "Błąd: Brak pojazdu! Status:\n";
+                std::cout << "!_ERROR_!: Brak pojazdu! Status:\n";
                 return false;
             }
             if (v.needsService()) {
                 v.status = Status::MAINTENANCE;
-                std::cout << "Błąd: Pojazd jest w serwisie!\n";
+                std::cout << "!_ERROR_!: Pojazd jest w serwisie!\n";
                 return false;
             }
 
@@ -55,7 +55,7 @@ bool RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string 
                 }
             }
 
-            std::cout << "Zwrot pomyślny. Total cost: " << total << " (Dodatkowe opłaty: " << extraFee << ")\n";
+            std::cout << " #_SUKCES_# :  Zwrot pomyslny. Calkowity koszt: " << total << " (Dodatkowe oplaty: " << extraFee << ")\n";
             return true;
         }
     }
@@ -63,16 +63,16 @@ bool RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string 
 }
 
 void RentalSystem::displayFleetStatus() const {
-    std::cout << "\n--- Obecny status floty ---\n";
+    std::cout << "\n>--- Obecny status floty ---<\n";
     for (const auto &v : vehicles) {
-        std::string s = (v.status == Status::AVAILABLE) ? "Dostępny" : 
-                        (v.status == Status::RENTED) ? "Wypożyczony" : "W naprawie";
+        std::string s = (v.status == Status::AVAILABLE) ? "Dostepny" : 
+                        (v.status == Status::RENTED) ? "Wypozyczony" : "W naprawie";
         std::cout << v.brand << " " << v.model << " | Przebieg: " << v.mileage << " | Status: " << s << "\n";
     }
 }
 
 void RentalSystem::displayFleetStatus(bool displayAvailable) const {
-    std::cout << "\n--- Dostępne opjazdy ---\n";
+    std::cout << "\n>--- Dostepne pojazdy ---<" <<endl;
     for (const auto &v : vehicles) {
         if(v.status == Status::AVAILABLE){
             std::cout << "ID: " << v.id << " | " << v.brand << " " << v.model << " | Przebieg: " << v.mileage << " \n";
@@ -80,13 +80,15 @@ void RentalSystem::displayFleetStatus(bool displayAvailable) const {
         else continue;
         
     }
+    cout<<endl;
 }
 
 void RentalSystem::displayUsers() const {
-    cout << "--- Lista Użytkowników ---" << endl;
+    cout << "\n>--- Lista Uzytkownikow ---<" << endl;
     for (const auto& user : users) {
-        cout << "ID: " << user.getId() << " | Imię: " << user.getName() << endl;
+        cout << "ID: " << user.getId() << " | Imie: " << user.getName() << endl;
     }
+    cout<<endl;
 }
 
 
@@ -97,7 +99,7 @@ void RentalSystem::loadVehiclesFromCSV(const std::string& filename) {
     std::string line;
 
     if (!file.is_open()) {
-        std::cerr << "Błąd: Nie można otworzyć pliku " << filename << std::endl;
+        std::cerr << "!_ERROR_! : Nie można otworzyć pliku " << filename << std::endl;
         return;
     }
 
@@ -128,5 +130,47 @@ void RentalSystem::loadVehiclesFromCSV(const std::string& filename) {
         }
     }
     file.close();
-    std::cout << "Pomyślnie zaimportowano pojazdy z " << filename << "\n";
+    std::cout << "#_SUKCES_# : Pomyslnie zaimportowano pojazdy z " << filename << "\n";
+}
+
+void RentalSystem::loadUsersFromCSV(const std::string& filename) {
+    std::ifstream file(filename);
+    std::string line;
+
+    if (!file.is_open()) {
+        std::cerr << "!_ERROR_! : Nie można otworzyc pliku " << filename << std::endl;
+        return;
+    }
+
+    // Pomijamy nagłówek
+    std::getline(file, line); 
+
+    while (std::getline(file, line)) {
+        if (line.empty()) continue; 
+        std::stringstream ss(line);
+        std::string item;
+        std::vector<std::string> row;
+
+        while (std::getline(ss, item, ',')) {
+            row.push_back(item);
+        }
+
+        
+        if (row.size() >= 3) {
+            try {
+                int id = std::stoi(row[0]);
+                std::string name = row[1];
+                
+                
+                bool isPremium = (row[2] == "1" || row[2] == "true");
+
+                User u(id, name, isPremium);
+                addUser(u); 
+            } catch (const std::exception& e) {
+                std::cerr << "!_ERROR_! : Blad parsowania linii: " << line << " (" << e.what() << ")" << std::endl;
+            }
+        }
+    }
+    file.close();
+    std::cout << "#_SUKCES_# : Pomyslnie zaimportowano użytkownikow z " << filename << "\n";
 }
