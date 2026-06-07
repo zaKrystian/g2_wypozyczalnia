@@ -5,6 +5,7 @@
 #include <stdexcept> // Potrzebne do rzucania wyjątków
 
 
+
 using namespace std;
 
 void RentalSystem::addVehicle(const Vehicle& v) {
@@ -114,7 +115,7 @@ void RentalSystem::displayFleetStatus(bool displayAvailable) const {
 void RentalSystem::displayUsers() const {
     cout << "\n>--- Lista Uzytkownikow ---<" << endl;
     for (const auto& user : users) {
-        cout << "ID: " << user.getId() << " | Imie: " << user.getName() << endl;
+        cout << "ID: " << user.getId() << " | Imie: " << user.getUsername() << endl;
     }
     cout << endl;
 }
@@ -161,42 +162,7 @@ void RentalSystem::loadVehiclesFromCSV(const std::string& filename) {
     std::cout << "#_SUKCES_# : Pomyslnie zaimportowano pojazdy z " << filename << "\n";
 }
 
-void RentalSystem::loadUsersFromCSV(const std::string& filename) {
-    std::ifstream file(filename);
-    std::string line;
 
-    if (!file.is_open()) {
-        throw std::runtime_error("Nie mozna otworzyc pliku bazy uzytkownikow: " + filename);
-    }
-
-    std::getline(file, line); 
-
-    while (std::getline(file, line)) {
-        if (line.empty()) continue; 
-        std::stringstream ss(line);
-        std::string item;
-        std::vector<std::string> row;
-
-        while (std::getline(ss, item, ',')) {
-            row.push_back(item);
-        }
-
-        if (row.size() >= 3) {
-            try {
-                int id = std::stoi(row[0]);
-                std::string name = row[1];
-                bool isPremium = (row[2] == "1" || row[2] == "true");
-
-                User u(id, name, isPremium);
-                addUser(u); 
-            } catch (const std::exception& e) {
-                std::cerr << "!_ERROR_! : Blad parsowania uzytkownika w linii: " << line << " (" << e.what() << ")" << std::endl;
-            }
-        }
-    }
-    file.close();
-    std::cout << "#_SUKCES_# : Pomyslnie zaimportowano użytkownikow z " << filename << "\n";
-}
 
 void RentalSystem::addNewVehicle(const std::string& brand, const std::string& model, int year, int mileage, int serviceLimit, double rate) {
     // Walidacja logiki domenowej
@@ -252,21 +218,62 @@ void RentalSystem::saveVehiclesToCSV(const std::string& filename) const {
     file.close();
 }
 
-void RentalSystem::saveUsersToCSV(const std::string& filename) const {
-    std::ofstream file(filename);
 
+
+void RentalSystem::loadUsersFromCSV(const std::string& filename) {
+    std::ifstream file(filename);
     if (!file.is_open()) {
-        throw std::runtime_error("Nie mozna otworzyc pliku do zapisu bazy uzytkownikow: " + filename);
+        // Awaryjne tworzenie admina, jeśli baza danych użytkowników jest pusta
+        users.push_back(User(1, "admin", "admin123", UserRole::ADMIN));
+        return;
     }
 
-    // Zapis nagłówka
-    file << "id,name,isPremium\n";
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+        std::stringstream ss(line);
+        std::string idStr, username, password, roleStr;
 
-    for (const auto& u : users) {
-        file << u.getId() << "," 
-             << u.getName() << "," 
-             << (u.getIsPremium() ? "1" : "0") << "\n"; 
+        std::getline(ss, idStr, ',');
+        std::getline(ss, username, ',');
+        std::getline(ss, password, ',');
+        std::getline(ss, roleStr, ',');
+
+        int id = std::stoi(idStr);
+        UserRole role = (roleStr == "ADMIN") ? UserRole::ADMIN : UserRole::CLIENT;
+
+        users.push_back(User(id, username, password, role));
     }
-    
     file.close();
+}
+
+void RentalSystem::saveUsersToCSV(const std::string& filename) {
+    std::ofstream file(filename);
+    if (!file.is_open()) return;
+
+    for (const auto& user : users) {
+        file << user.getId() << ","
+             << user.getUsername() << ","
+             << user.getPassword() << ","
+             << user.getRoleAsString() << "\n";
+    }
+    file.close();
+}
+
+bool RentalSystem::login(const std::string& username, const std::string& password) {
+    for (auto& user : users) {
+        if (user.getUsername() == username && user.checkPassword(password)) {
+            currentUser = &user;
+            return true;
+        }
+    }
+    return false;
+}
+
+void RentalSystem::logout() {
+    currentUser = nullptr;
+}
+
+User* RentalSystem::getCurrentUser() const {
+    return currentUser;
 }
