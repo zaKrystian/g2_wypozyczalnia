@@ -7,7 +7,7 @@ using namespace std;
 
 void systemHalt() {
     cin.clear(); 
-    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     cout << "\n-> Nacisnij ENTER aby kontynuowac... ";
     cin.get(); 
 }
@@ -124,7 +124,7 @@ int main() {
 
             case 4: {
                 try {
-                    std::string brand, model;
+                    string brand, model;
                     int year, mileage, serviceLimit;
                     double rate;
 
@@ -134,10 +134,10 @@ int main() {
                     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
                     cout << "> Podaj marke pojazdu: ";
-                    std::getline(cin, brand);
+                    getline(cin, brand);
 
                     cout << "> Podaj model pojazdu: ";
-                    std::getline(cin, model);
+                    getline(cin, model);
 
                     cout << "> Podaj rok produkcji: ";
                     if (!(cin >> year)) throw invalid_argument("Wymagana wartosc liczbowa dla roku.");
