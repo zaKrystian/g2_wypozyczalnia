@@ -2,7 +2,7 @@
   <h1>🚘 Wypożyczalnia - System Zarządzania Flotą</h1>
 
   [![Język](https://img.shields.io/badge/Język-C++-blue.svg)](https://isocpp.org/)
-  [![Status](https://img.shields.io/badge/Status-W_trakcie_rozwoju-brightgreen.svg)]()
+  [![Status](https://img.shields.io/badge/Zakonczono-red.svg)]()
 
   *Repozytorium projektu grupy 2 w ramach przedmiotu **PPwC IwIK 2025/2026**.*
 </div>
