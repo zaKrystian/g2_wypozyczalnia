@@ -1,66 +1,76 @@
-#include "RentalSystem.h"
 #include <iostream>
+#include "RentalSystem.h"
+#include "menus.h"
 #include <limits> 
 #include <stdexcept> 
 
-using namespace std;
-
-void systemHalt() {
-    cin.clear(); 
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    cout << "\n-> Nacisnij ENTER aby kontynuowac... ";
-    cin.get(); 
-}
 
 int main() {
-
     RentalSystem system;
-    
-    
+
+    // Bezpieczne ladowanie danych struktury CSV
     try {
-        system.loadVehiclesFromCSV("data/cars.csv");
         system.loadUsersFromCSV("data/users.csv");
-    } 
-    catch (const exception& e) {
-        cerr << " CRITICAL ERROR: Nie udalo sie zainicjalizowac bazy danych!" << endl;
-        cerr << " Szczegoly błędu: " << e.what() << endl;
-        cerr << " Program zostanie zamkniety." << endl;
-        return 1; 
+        system.loadVehiclesFromCSV("data/vehicles.csv");
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Blad krytyczny podczas inicjalizacji danych: " << e.what() << "\n";
     }
 
-    int chosenState;
-    bool run = true;
+    bool running = true;
+    while (running) {
+        User* loggedUser = system.getCurrentUser();
 
-    while (run) {
-        cout <<"\n";
-        cout << "###################################" << endl;
-        cout << "#     WYPORZYCZALNIA POJAZDOW     #"  << endl;
-        cout << "###################################\n" << endl;
-        cout << "> Wybierz akcje:" << endl;
-        cout << " 1) Status Floty" << endl;
-        cout << " 2) Wypozyczenie pojazdu" << endl;
-        cout << " 3) Zwrot pojazdu" << endl;
-        cout << " 4) Dodawanie pojazdu" << endl;
-        cout << " 5) Dodawanie uzytkownika" << endl;
-        cout << " 0) Konczenie dzialania programu" << endl;
-        cout << "> WYBOR: ";
+        // 1. MENU DLA NIEZALOGOWANEGO UZYTKOWNIKA (GOSC)
+        if (loggedUser == nullptr) {
+            showGuestMenu();
+            int choice;
+            if (!(std::cin >> choice)) {
+                std::cin.clear();
+                std::cin.ignore(10000, '\n');
+                std::cout << "Niepoprawny znak! Wprowadz cyfre.\n";
+                continue;
+            }
 
-        if (!(cin >> chosenState)) {
-            cout << " !_ERROR_!: To nie jest liczba. Sprobuj ponownie." << endl;
-            cin.clear(); 
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
-            continue;
-        }
+            switch (choice) {
+                case 1: {
+                    std::string username, password;
+                    std::cout << "Podaj login: ";
+                    std::cin >> username;
+                    std::cout << "Podaj haslo: ";
+                    std::cin >> password;
 
-        switch (chosenState) {
-            case 1:
-                system.displayFleetStatus();
-                systemHalt();
-                break;
+                    if (system.login(username, password)) {
+                        std::cout << "\nZalogowano pomyslnie! Witaj " << system.getCurrentUser()->getUsername() << ".\n";
+                    } else {
+                        std::cout << "\nBlad: Niepoprawny login lub haslo.\n";
+                    }
+                    break;
+                }
+                case 0:
+                    running = false;
+                    break;
+                default:
+                    std::cout << "Niepoprawna opcja menu.\n";
+            }
+        } 
+        // 2. MENU DLA KLIENTA
+        else if (loggedUser->getRole() == UserRole::CLIENT) {
+            showClientMenu(loggedUser->getUsername());
+            int choice;
+            if (!(std::cin >> choice)) {
+                std::cin.clear();
+                std::cin.ignore(10000, '\n');
+                continue;
+            }
 
-            case 2:
-                
-                try {
+            switch (choice) {
+                case 1:
+                    system.displayFleetStatus(true);
+                    systemHalt();
+                    break;
+                case 2:
+                    try {
                     system.displayFleetStatus(true); 
                     int rentID, userID;
     
@@ -90,8 +100,8 @@ int main() {
                 systemHalt();
                 break;
 
-            case 3:
-                try {
+                case 3:
+                    try {
                     int returnID, currentMileage, rentalDays;
                     
                     cout << "\n>--- Procedura Zwrotu Pojazdu ---<" << endl;
@@ -121,8 +131,36 @@ int main() {
 
                 systemHalt();
                 break;
+                case 4:
+                    // Filtrowanie transakcji dla zalogowanego klienta
+                    break;
+                case 5:
+                    system.logout();
+                    std::cout << "Wylogowano pomyslnie.\n";
+                    break;
+                case 0:
+                    running = false;
+                    break;
+                default:
+                    std::cout << "Niepoprawna opcja menu.\n";
+            }
+        } 
+        // 3. MENU DLA ADMINISTRATORA
+        else if (loggedUser->getRole() == UserRole::ADMIN) {
+            showAdminMenu(loggedUser->getUsername());
+            int choice;
+            if (!(std::cin >> choice)) {
+                std::cin.clear();
+                std::cin.ignore(10000, '\n');
+                continue;
+            }
 
-            case 4: {
+            switch (choice) {
+                case 1:
+                    system.displayFleetStatus();
+                    systemHalt();
+                    break;
+                case 2:
                 try {
                     string brand, model;
                     int year, mileage, serviceLimit;
@@ -168,34 +206,34 @@ int main() {
 
                 systemHalt();
                 break;
+                case 3:
+                    // Wywolanie Twojej metody usuwania pojazdu
+                    break;
+                case 4:
+                    
+                    break;
+                case 5:
+                    system.logout();
+                    std::cout << "Wylogowano pomyslnie.\n";
+                    break;
+                case 0:
+                    running = false;
+                    break;
+                default:
+                    std::cout << "Niepoprawna opcja menu.\n";
             }
-
-            case 5:
-                cout << "Logika dodawania uzytkownika..." << endl;
-                break;
-
-            case 0: {
-                cout << "\n>--- Trwa archiwizacja stanu systemu ---<" << endl;
-                try {
-                    system.saveVehiclesToCSV("data/cars.csv");
-                    system.saveUsersToCSV("data/users.csv");
-                    cout << " #_SUKCES_# : Zrzut danych do bazy CSV przebiegl pomyslnie." << endl;
-                } 
-                catch (const exception& e) {
-                    cout << " !_ERROR_ I/O: " << e.what() << endl;
-                    cout << " UWAGA: Czesc danych mogla nie zostac utrwalona." << endl;
-                }
-
-                cout << "Zamykanie systemu. Do widzenia!" << endl;
-                run = false;
-                break;
-            }
-
-            default:
-                cout << " !_ERROR_!: Podano niepoprawna liczbe (wybierz 0-5)." << endl;
-                break;
         }
     }
 
+    // Bezpieczny zapis stanu bazy przed zamknieciem aplikacji
+    try {
+        system.saveUsersToCSV("data/users.csv");
+        system.saveVehiclesToCSV("data/vehicles.csv");
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Blad podczas zapisu danych do pliku CSV: " << e.what() << "\n";
+    }
+
+    std::cout << "\nProgram zakonczyl dzialanie. Do zobaczenia!\n";
     return 0;
 }
