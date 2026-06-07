@@ -122,18 +122,74 @@ int main() {
                 systemHalt();
                 break;
 
-            case 4:
-                cout << "Logika dodawania pojazdu...." << endl;
+            case 4: {
+                try {
+                    std::string brand, model;
+                    int year, mileage, serviceLimit;
+                    double rate;
+
+                    cout << "\n>--- Procedura Dodawania Nowego Pojazdu ---<" << endl;
+
+                    // Oczyszczenie bufora po wczytaniu wyboru z menu
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+                    cout << "> Podaj marke pojazdu: ";
+                    std::getline(cin, brand);
+
+                    cout << "> Podaj model pojazdu: ";
+                    std::getline(cin, model);
+
+                    cout << "> Podaj rok produkcji: ";
+                    if (!(cin >> year)) throw invalid_argument("Wymagana wartosc liczbowa dla roku.");
+
+                    cout << "> Podaj obecny przebieg (km): ";
+                    if (!(cin >> mileage)) throw invalid_argument("Wymagana wartosc liczbowa dla przebiegu.");
+
+                    cout << "> Podaj limit przebiegu do serwisu (km): ";
+                    if (!(cin >> serviceLimit)) throw invalid_argument("Wymagana wartosc liczbowa dla limitu.");
+
+                    cout << "> Podaj stawke dobowa (PLN): ";
+                    if (!(cin >> rate)) throw invalid_argument("Wymagana wartosc liczbowa dla stawki.");
+
+                    // Przekazanie danych do warstwy logiki
+                    system.addNewVehicle(brand, model, year, mileage, serviceLimit, rate);
+                    
+                    cout << "\n #_SUKCES_# : Pojazd zostal pomyslnie zarejestrowany w systemie." << endl;
+
+                }
+                catch (const invalid_argument& e) {
+                    cout << " !_ERROR_ Danych: " << e.what() << endl;
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                }
+                catch (const exception& e) {
+                    cout << " !_ERROR_ Krytyczny: " << e.what() << endl;
+                }
+
+                systemHalt();
                 break;
+            }
 
             case 5:
                 cout << "Logika dodawania uzytkownika..." << endl;
                 break;
 
-            case 0:
+            case 0: {
+                cout << "\n>--- Trwa archiwizacja stanu systemu ---<" << endl;
+                try {
+                    system.saveVehiclesToCSV("data/cars.csv");
+                    system.saveUsersToCSV("data/users.csv");
+                    cout << " #_SUKCES_# : Zrzut danych do bazy CSV przebiegl pomyslnie." << endl;
+                } 
+                catch (const exception& e) {
+                    cout << " !_ERROR_ I/O: " << e.what() << endl;
+                    cout << " UWAGA: Czesc danych mogla nie zostac utrwalona." << endl;
+                }
+
                 cout << "Zamykanie systemu. Do widzenia!" << endl;
                 run = false;
                 break;
+            }
 
             default:
                 cout << " !_ERROR_!: Podano niepoprawna liczbe (wybierz 0-5)." << endl;
