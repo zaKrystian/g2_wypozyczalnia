@@ -165,7 +165,7 @@ void RentalSystem::displayFleetStatus(bool displayAvailable) const {
 }
 
 void RentalSystem::displayFleetStatus(bool adminPowers, bool displayUnAvailable) const {
-    std::cout << "\n>--- Dostepne pojazdy ---<" << endl;
+    std::cout << "\n>--- Pojazdy w naprawie ---<" << endl;
     for (const auto &v : vehicles) {
         if(v.status == Status::MAINTENANCE){
             std::cout << "ID: " << v.id << " | " << v.brand << " " << v.model << " | Przebieg: " << v.mileage << " \n";
