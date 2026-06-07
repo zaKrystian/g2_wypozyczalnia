@@ -23,8 +23,9 @@ public:
     void addUser(const User& u);
     
     // MVP Logic
-    void rentVehicle(int vehicleId, int userId, std::string date);
-    void returnVehicle(int vehicleId, int currentMileage, string date, int days);
+    void rentVehicle(int vehicleId, int userId, string date);
+    void returnVehicle(int vehicleId, int currentMileage, int days);
+
     
     void displayFleetStatus() const;
     void displayFleetStatus(bool displayActive) const;
@@ -43,6 +44,16 @@ public:
     bool login(const std::string& username, const std::string& password);
     void logout();
     User* getCurrentUser() const;
+
+    
+    // Nowe metody do obsługi widoków transakcji
+    void displayAllTransactions() const;
+    void displayUserTransactions(int userId) const;
+    void displayActiveUserTransactions(int userId) const;
+    bool hasActiveTransactions(int userId) const;
+
+    void loadTransactionsFromCSV(const std::string& filename);
+    void saveTransactionsToCSV(const std::string& filename) const;
     
 };
 

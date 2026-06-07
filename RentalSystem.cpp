@@ -17,10 +17,10 @@ void RentalSystem::addUser(const User& u) {
 }
 
 // Zmieniono typ zwracany na void - błędy są teraz wyjątkami
-void RentalSystem::rentVehicle(int vehicleId, int userId, std::string date) {
+void RentalSystem::rentVehicle(int vehicleId, int userId, string date) {
     bool vehicleFound = false;
 
-    // Sprawdzamy najpierw, czy użytkownik w ogóle istnieje w systemie
+    
     bool userFound = false;
     for (const auto &u : users) {
         if (u.getId() == userId) {
@@ -39,16 +39,18 @@ void RentalSystem::rentVehicle(int vehicleId, int userId, std::string date) {
             // Blokada: Serwis lub zajety
             if (v.status != Status::AVAILABLE) {
                 throw std::runtime_error("Pojazd nie jest dostepny (jest juz wypozyczony lub w naprawie).");
+                return;
             }
             if (v.needsService()) {
                 v.status = Status::MAINTENANCE;
                 throw std::runtime_error("Pojazd wymaga natychmiastowego serwisu! Zmieniono status na MAINTENANCE.");
+                return;
             }
 
             // Jeśli wszystko OK:
             v.status = Status::RENTED;
-            transactions.push_back(Transaction(nextTransactionId++, userId, vehicleId, date, v.mileage));
-            return; // Sukces, wychodzimy z metody
+            transactions.push_back(Transaction(nextTransactionId++, userId, vehicleId, v.brand, date, v.mileage));
+            return; 
         }
     }
 
@@ -57,7 +59,7 @@ void RentalSystem::rentVehicle(int vehicleId, int userId, std::string date) {
     }
 }
 
-void RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string date, int days) {
+void RentalSystem::returnVehicle(int vehicleId, int currentMileage, int days) {
     for (auto &v : vehicles) {
         if (v.id == vehicleId) {
             if (v.status != Status::RENTED) {
@@ -70,27 +72,77 @@ void RentalSystem::returnVehicle(int vehicleId, int currentMileage, std::string 
             int distanceTraveled = currentMileage - v.mileage;
             double extraFee = 0;
 
-            // Logika kar za przebieg
             if (distanceTraveled > v.mileageLimitPerRental) {
-                extraFee = (distanceTraveled - v.mileageLimitPerRental) * 2.0; // 2.0 za kazdy km ponad limit
+                extraFee = (distanceTraveled - v.mileageLimitPerRental) * 2.0;
             }
 
             double total = (days * v.dailyRate) + extraFee;
             v.updateMileage(currentMileage);
             v.status = v.needsService() ? Status::MAINTENANCE : Status::AVAILABLE;
 
-            // Aktualizacja ostatniej transakcji dla tego auta
+            // Aktualizacja aktywnej transakcji dla tego auta
+            bool transactionFound = false;
             for (auto &t : transactions) {
-                if (t.vehicleId == vehicleId && t.endMileage == 0) {
-                    t.completeTransaction(date, currentMileage, total, extraFee);
+                if (t.getVehicleId() == vehicleId && t.getStatus() == TransactionStatus::ACTIVE) {
+                    t.completeTransaction(days, currentMileage, total, extraFee);
+                    transactionFound = true;
                     break;
                 }
             }
 
+            if (!transactionFound) {
+                throw std::runtime_error("Nie znaleziono aktywnej transakcji dla tego pojazdu.");
+            }
+
             std::cout << " #_SUKCES_# :  Zwrot pomyslny. Calkowity koszt: " << total << " (Dodatkowe oplaty: " << extraFee << ")\n";
+            return; 
         }
     }
     throw std::runtime_error("Nie znaleziono pojazdu o podanym ID.");
+}
+
+
+void RentalSystem::displayAllTransactions() const {
+    std::cout << "\n>--- Rejestr wszystkich transakcji (Tryb Administratora) ---<\n";
+    if (transactions.empty()) {
+        std::cout << "Brak zapisanych transakcji w systemie.\n";
+        return;
+    }
+    for (const auto& t : transactions) {
+        t.displaySummary();
+    }
+}
+
+void RentalSystem::displayUserTransactions(int userId) const {
+    std::cout << "\n>--- Historia transakcji uzytkownika ---<\n";
+    bool found = false;
+    for (const auto& t : transactions) {
+        if (t.getUserId() == userId) {
+            t.displaySummary();
+            found = true;
+        }
+    }
+    if (!found) {
+        std::cout << "Brak historii transakcji dla tego uzytkownika.\n";
+    }
+}
+
+void RentalSystem::displayActiveUserTransactions(int userId) const {
+    std::cout << "\n>--- Aktywne wypozyczenia ---<\n";
+    for (const auto& t : transactions) {
+        if (t.getUserId() == userId && t.getStatus() == TransactionStatus::ACTIVE) {
+            t.displaySummary();
+        }
+    }
+}
+
+bool RentalSystem::hasActiveTransactions(int userId) const {
+    for (const auto& t : transactions) {
+        if (t.getUserId() == userId && t.getStatus() == TransactionStatus::ACTIVE) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void RentalSystem::displayFleetStatus() const {
@@ -276,4 +328,75 @@ void RentalSystem::logout() {
 
 User* RentalSystem::getCurrentUser() const {
     return currentUser;
+}
+
+void RentalSystem::loadTransactionsFromCSV(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        return;
+    }
+
+    std::string line;
+    std::getline(file, line); // Pominięcie nagłówka
+
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+        std::stringstream ss(line);
+        std::string item;
+        std::vector<std::string> row;
+
+        while (std::getline(ss, item, ',')) {
+            row.push_back(item);
+        }
+
+        if (row.size() >= 11) {
+            try {
+                int tId = std::stoi(row[0]);
+                int uId = std::stoi(row[1]);
+                int vId = std::stoi(row[2]);
+                std::string brand = row[3];
+                std::string startD = row[4];
+                int days = std::stoi(row[5]); // Parsowanie liczby dni zamiast daty tekstowej
+                int startM = std::stoi(row[6]);
+                int endM = std::stoi(row[7]);
+                double cost = std::stod(row[8]);
+                double fee = std::stod(row[9]);
+                TransactionStatus stat = (row[10] == "ACTIVE") ? TransactionStatus::ACTIVE : TransactionStatus::COMPLETED;
+
+                transactions.push_back(Transaction(tId, uId, vId, brand, startD, days, startM, endM, cost, fee, stat));
+                
+                if (tId >= nextTransactionId) {
+                    nextTransactionId = tId + 1;
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "!_WARNING_! : Blad parsowania transakcji w linii: " << line << " (" << e.what() << ")" << std::endl;
+            }
+        }
+    }
+    file.close();
+}
+
+void RentalSystem::saveTransactionsToCSV(const std::string& filename) const {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Blad: Nie mozna otworzyc pliku do zapisu transakcji: " << filename << "\n";
+        return;
+    }
+
+    file << "transactionId,userId,vehicleId,vehicleBrand,startDate,rentalDays,startMileage,endMileage,totalCost,extraFee,status\n";
+
+    for (const auto& t : transactions) {
+        file << t.getTransactionId() << ","
+             << t.getUserId() << ","
+             << t.getVehicleId() << ","
+             << t.getVehicleBrand() << ","
+             << t.getStartDate() << ","
+             << t.getRentalDays() << ","
+             << t.getStartMileage() << ","
+             << t.getEndMileage() << ","
+             << t.getTotalCost() << ","
+             << t.getExtraFee() << ","
+             << t.getStatusAsString() << "\n";
+    }
+    file.close();
 }
