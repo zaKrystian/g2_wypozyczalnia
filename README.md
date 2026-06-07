@@ -31,17 +31,14 @@ Aplikacja to konsolowy system do kompleksowego zarządzania flotą pojazdów, po
 *   **Monitorowanie stanu:** Bieżące śledzenie statusu każdego pojazdu (dostępny, wypożyczony, serwisowany).
 *   **Ewidencja przebiegu:** Zapis licznika przed i po wypożyczeniu oraz aktualizacja danych.
 *   **Wypożyczenia i zwroty:** Rejestracja wydania pojazdu oraz weryfikacja stanu przy powrocie do bazy.
-*   **Historia i finanse:** Pełna historia wypożyczeń dla pojazdu (kto, kiedy, na jak długo) oraz naliczanie opłat.
+*   **Historia i finanse:** Pełna historia wypożyczeń.
 *   **Zarządzanie przeglądami:** Blokada wypożyczenia aut wymagających serwisu; kary za przekroczenie limitu kilometrów.
 
 ---
 
 # 📦 Struktura danych i klasy
 
-Podstawą architektury systemu jest polimorfizm i dziedziczenie. Główną klasą bazową jest **`Vehicle`** (Pojazd), od której pochodzą:
-> 🔹 Samochód osobowy  
-> 🔹 Samochód dostawczy  
-> 🔹 Motocykl  
+<--- Należy zrobić update -----> 
 
 Każdy obiekt w systemie agreguje:
 *   **Dane pojazdu:** ID, marka, model, rok produkcji.
@@ -59,7 +56,8 @@ Każdy obiekt w systemie agreguje:
 | **`Vehicle`** `(.h/.cpp)` | Klasa bazowa pojazdu i jej klasy pochodne. |
 | **`User`** `(.h/.cpp)` | Reprezentacja klienta wypożyczalni. |
 | **`Transaction`** `(.h/.cpp)` | Obsługa kosztów i dat wypożyczeń. |
-| **`data/`** | Katalog na pliki z danymi / bazę tekstową. |
+| **`menus`** `(.h/.cpp)` | Wyświetlanie różnych menu. |
+| **`data/`** | Katalog na pliki z danymi, które są zapisane w .csv. |
 | **`diagrams`** | Diagramy klas i architektury (pliki `.png`). |
 
 ---
@@ -80,7 +78,7 @@ Do uruchomienia projektu wymagany jest kompilator wspierający standard **C++11*
    ```
 3. **Skompiluj pliki:**
    ```bash
-   g++ main.cpp RentalSystem.cpp Transacion.cpp User.cpp Vehicle.cpp -o wypozyczalnia
+   g++ *.cpp -o wypozyczalnia
    ```
 4. **Uruchom:**
    ```bash
