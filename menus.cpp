@@ -40,7 +40,7 @@ void showAdminMenu(const std::string& name) {
     std::cout << "=====================================\n";
     std::cout << "1. Wyswietl pelna flote pojazdow\n";
     std::cout << "2. Dodaj nowy pojazd do systemu\n";
-    std::cout << "3. Usun pojazd z systemu\n";
+    std::cout << "3. Napraw pojazd\n";
     std::cout << "4. Przegladaj wszystkie transakcje\n";
     std::cout << "5. Wyloguj sie\n";
     std::cout << "0. Wyjdz z programu\n";
