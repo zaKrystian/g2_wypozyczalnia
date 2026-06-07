@@ -32,6 +32,11 @@ public:
 
     void loadVehiclesFromCSV(const string& filename);
     void loadUsersFromCSV(const string& filename);
+
+    void addNewVehicle(const std::string& brand, const std::string& model, int year, int mileage, int serviceLimit, double rate);
+
+    void saveVehiclesToCSV(const std::string& filename) const;
+    void saveUsersToCSV(const std::string& filename) const;
 };
 
 #endif

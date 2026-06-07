@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdexcept> // Potrzebne do rzucania wyjątków
 
+
 using namespace std;
 
 void RentalSystem::addVehicle(const Vehicle& v) {
@@ -195,4 +196,77 @@ void RentalSystem::loadUsersFromCSV(const std::string& filename) {
     }
     file.close();
     std::cout << "#_SUKCES_# : Pomyslnie zaimportowano użytkownikow z " << filename << "\n";
+}
+
+void RentalSystem::addNewVehicle(const std::string& brand, const std::string& model, int year, int mileage, int serviceLimit, double rate) {
+    // Walidacja logiki domenowej
+    if (brand.empty() || model.empty()) {
+        throw std::invalid_argument("Marka oraz model pojazdu nie moga byc puste.");
+    }
+    if (year < 1900 || year > 2026) {
+        throw std::invalid_argument("Podano nierealistyczny rok produkcji.");
+    }
+    if (mileage < 0) {
+        throw std::invalid_argument("Przebieg nie moze byc wartoscia ujemna.");
+    }
+    if (serviceLimit <= mileage) {
+        throw std::invalid_argument("Limit serwisowy musi przewyzszac aktualny przebieg.");
+    }
+    if (rate <= 0) {
+        throw std::invalid_argument("Stawka dobowa musi byc wieksza od zera.");
+    }
+
+    // Automatyczne generowanie unikalnego ID
+    int nextId = 1;
+    for (const auto& v : vehicles) {
+        if (v.id >= nextId) {
+            nextId = v.id + 1;
+        }
+    }
+
+    // Utworzenie obiektu i dodanie do wektora bazy
+    Vehicle newVehicle(nextId, brand, model, year, mileage, serviceLimit, rate);
+    addVehicle(newVehicle);
+}
+
+void RentalSystem::saveVehiclesToCSV(const std::string& filename) const {
+    std::ofstream file(filename);
+
+    if (!file.is_open()) {
+        throw std::runtime_error("Nie mozna otworzyc pliku do zapisu bazy pojazdow: " + filename);
+    }
+
+    // Zapis nagłówka (niezbędne, gdyż loadVehiclesFromCSV ignoruje pierwszą linię)
+    file << "id,brand,model,year,mileage,serviceLimit,rate\n";
+
+    for (const auto& v : vehicles) {
+        file << v.id << "," 
+             << v.brand << "," 
+             << v.model << "," 
+             << v.productionYear << "," 
+             << v.mileage << "," 
+             << v.serviceMileageLimit << "," 
+             << v.dailyRate << "\n";
+    }
+    
+    file.close();
+}
+
+void RentalSystem::saveUsersToCSV(const std::string& filename) const {
+    std::ofstream file(filename);
+
+    if (!file.is_open()) {
+        throw std::runtime_error("Nie mozna otworzyc pliku do zapisu bazy uzytkownikow: " + filename);
+    }
+
+    // Zapis nagłówka
+    file << "id,name,isPremium\n";
+
+    for (const auto& u : users) {
+        file << u.getId() << "," 
+             << u.getName() << "," 
+             << (u.getIsPremium() ? "1" : "0") << "\n"; 
+    }
+    
+    file.close();
 }
