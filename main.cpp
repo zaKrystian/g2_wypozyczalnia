@@ -211,8 +211,28 @@ int main() {
 
                 systemHalt();
                 break;
-                case 3:
-                    
+                case 3: 
+                    try {
+                        int repairID;
+                        cout << "\n>--- Procedura Serwisowa / Naprawa Pojazdu ---<" << endl;
+                        system.displayFleetStatus(true,true);
+                        cout << "> Podaj ID samochodu, ktory zostal naprawiony: ";
+                        if (!(cin >> repairID)) {
+                            throw invalid_argument("Niepoprawny format ID samochodu (musi byc liczba).");
+                        }
+
+                        system.repairVehicle(repairID);
+                    }
+                    catch (const invalid_argument& e) {
+                        cout << " !_ERROR_ danych wejsciowych: " << e.what() << endl;
+                        cin.clear();
+                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    }
+                    catch (const exception& e) {
+                        cout << " !_ERROR_ SYSTEMU SERWISOWEGO: " << e.what() << endl;
+                    }
+
+                    systemHalt();
                     break;
                 case 4:
                     system.displayAllTransactions();

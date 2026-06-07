@@ -54,6 +54,10 @@ public:
 
     void loadTransactionsFromCSV(const std::string& filename);
     void saveTransactionsToCSV(const std::string& filename) const;
+
+    void repairVehicle(int vehicleId);
+
+    void displayFleetStatus(bool adminPowers, bool displayUnAvailable) const;
     
 };
 

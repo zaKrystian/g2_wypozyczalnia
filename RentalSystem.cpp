@@ -164,6 +164,17 @@ void RentalSystem::displayFleetStatus(bool displayAvailable) const {
     cout << endl;
 }
 
+void RentalSystem::displayFleetStatus(bool adminPowers, bool displayUnAvailable) const {
+    std::cout << "\n>--- Dostepne pojazdy ---<" << endl;
+    for (const auto &v : vehicles) {
+        if(v.status == Status::MAINTENANCE){
+            std::cout << "ID: " << v.id << " | " << v.brand << " " << v.model << " | Przebieg: " << v.mileage << " \n";
+        }
+    }
+    cout << endl;
+}
+
+
 void RentalSystem::displayUsers() const {
     cout << "\n>--- Lista Uzytkownikow ---<" << endl;
     for (const auto& user : users) {
@@ -399,4 +410,25 @@ void RentalSystem::saveTransactionsToCSV(const std::string& filename) const {
              << t.getStatusAsString() << "\n";
     }
     file.close();
+}
+
+void RentalSystem::repairVehicle(int vehicleId) {
+    for (auto &v : vehicles) {
+        if (v.id == vehicleId) {
+            if (v.status != Status::MAINTENANCE) {
+                throw std::runtime_error("Pojazd nie znajduje sie obecnie w stanie serwisu/naprawy.");
+            }
+
+            // Zmiana statusu na dostepny we flocie
+            v.status = Status::AVAILABLE;
+
+            // Aktualizacja limitu serwisu o 10000 km od obecnego przebiegu pojazdu
+            v.serviceMileageLimit = v.mileage + 10000;
+
+            std::cout << " #_SUKCES_# : Pojazd o ID " << vehicleId << " zostal pomyslnie naprawiony i przywrocony do floty.\n";
+            std::cout << "              Aktualny przebieg: " << v.mileage << " km | Nowy limit serwisu: " << v.serviceMileageLimit << " km\n";
+            return;
+        }
+    }
+    throw std::runtime_error("Nie znaleziono pojazdu o podanym ID.");
 }
