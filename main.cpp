@@ -12,6 +12,7 @@ int main() {
     try {
         system.loadUsersFromCSV("data/users.csv");
         system.loadVehiclesFromCSV("data/vehicles.csv");
+        system.loadTransactionsFromCSV("data/transactions.csv"); 
         
     } catch (const std::exception& e) {
         std::cerr << "Blad krytyczny podczas inicjalizacji danych: " << e.what() << "\n";
@@ -71,68 +72,72 @@ int main() {
                     break;
                 case 2:
                     try {
-                    system.displayFleetStatus(true); 
-                    int rentID, userID;
-    
-                    cout << "> Podaj ID samochodu do wypozyczenia: ";
-                    if (!(cin >> rentID)) throw invalid_argument("Niepoprawny format ID samochodu (musi byc liczba).");
+                        system.displayFleetStatus(true); 
+                        int rentID;
+        
+                        cout << "> Podaj ID samochodu do wypozyczenia: ";
+                        if (!(cin >> rentID)) throw invalid_argument("Niepoprawny format ID samochodu (musi byc liczba).");
 
-                    system.displayUsers(); 
-                    cout << "> Podaj ID użytkownika: ";
-                    if (!(cin >> userID)) throw invalid_argument("Niepoprawny format ID uzytkownika (musi byc liczba).");
-
-                    
-                    system.rentVehicle(rentID, userID, "2026-05-08");
-                    cout << " #_SUKCES_# : Pojazd wypozyczony pomyślnie." << endl;
-                    
-                } 
-                catch (const invalid_argument& e) {
-                    
-                        cout << " !_ERROR_ danych wejściowych: " << e.what() << endl;
+                        // Pobieranie ID bezpośrednio z sesji użytkownika
+                        int sessionUserId = loggedUser->getId();
+                        
+                        system.rentVehicle(rentID, sessionUserId, "2026-05-08");
+                        cout << " #_SUKCES_# : Pojazd wypozyczony pomyslnie." << endl;
+                    } 
+                    catch (const invalid_argument& e) {
+                        cout << " !_ERROR_ danych wejsciowych: " << e.what() << endl;
                         cin.clear();
                         cin.ignore(numeric_limits<streamsize>::max(), '\n');
                     }
                     catch (const exception& e) {
-                    
                         cout << " !_ERROR_ SYSTEMU: " << e.what() << endl;
                     }
-                
-                systemHalt();
-                break;
+                    systemHalt();
+                    break;
 
                 case 3:
                     try {
-                    int returnID, currentMileage, rentalDays;
-                    
-                    cout << "\n>--- Procedura Zwrotu Pojazdu ---<" << endl;
-                    cout << "> Podaj ID samochodu do zwrotu: ";
-                    if (!(cin >> returnID)) throw invalid_argument("Niepoprawny format ID samochodu (musi byc liczba).");
+                        cout << "\n>--- Procedura Zwrotu Pojazdu ---<" << endl;
+                        
+                        int sessionUserId = loggedUser->getId();
+                        
+                        // Sprawdzenie warunku koniecznego: czy użytkownik posiada sprzęt do zwrotu
+                        if (!system.hasActiveTransactions(sessionUserId)) {
+                            cout << "Brak aktywnych wypozyczen. Procedura zwrotu zostala przerwana.\n";
+                            systemHalt();
+                            break;
+                        }
 
-                    cout << "> Podaj obecny stan licznika (przebieg): ";
-                    if (!(cin >> currentMileage)) throw invalid_argument("Niepoprawny format przebiegu (musi byc liczba).");
+                        system.displayActiveUserTransactions(sessionUserId);
 
-                    cout << "> Podaj liczbe dni wypozyczenia: ";
-                    if (!(cin >> rentalDays)) throw invalid_argument("Niepoprawna liczba dni (musi byc liczba).");
-                    if (rentalDays <= 0) throw invalid_argument("Liczba dni musi byc wieksza od 0.");
+                        int returnCarID, currentMileage, rentalDays;
+                        
+                        cout << "> Podaj ID samochodu: ";
+                        if (!(cin >> returnCarID)) throw invalid_argument("Niepoprawny format ID transakcji (musi byc liczba).");
 
-                    system.returnVehicle(returnID, currentMileage, "2026-05-08", rentalDays);
-                    
-                } 
-                catch (const invalid_argument& e) {
-                   
-                    cout << " !_ERROR_ danych wejściowych: " << e.what() << endl;
-                    cin.clear();
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                }
-                catch (const exception& e) {
-                   
-                    cout << " !_ERROR_ SYSTEMU ZWROTOW: " << e.what() << endl;
-                }
+                        cout << "> Podaj obecny stan licznika (przebieg): ";
+                        if (!(cin >> currentMileage)) throw invalid_argument("Niepoprawny format przebiegu (musi byc liczba).");
 
-                systemHalt();
-                break;
+                        cout << "> Podaj liczbe dni wypozyczenia: ";
+                        if (!(cin >> rentalDays)) throw invalid_argument("Niepoprawna liczba dni (musi byc liczba).");
+                        if (rentalDays <= 0) throw invalid_argument("Liczba dni musi byc wieksza od 0.");
+
+                        system.returnVehicle(returnCarID, currentMileage, rentalDays);
+                    } 
+                    catch (const invalid_argument& e) {
+                        cout << " !_ERROR_ danych wejsciowych: " << e.what() << endl;
+                        cin.clear();
+                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    }
+                    catch (const exception& e) {
+                        cout << " !_ERROR_ SYSTEMU ZWROTOW: " << e.what() << endl;
+                    }
+
+                    systemHalt();
+                    break;
                 case 4:
-                    // Filtrowanie transakcji dla zalogowanego klienta
+                    system.displayUserTransactions(loggedUser->getId());
+                    systemHalt();
                     break;
                 case 5:
                     system.logout();
@@ -207,14 +212,15 @@ int main() {
                 systemHalt();
                 break;
                 case 3:
-                    // Wywolanie Twojej metody usuwania pojazdu
+                    
                     break;
                 case 4:
-                    
+                    system.displayAllTransactions();
+                    systemHalt();
                     break;
                 case 5:
                     system.logout();
-                    std::cout << "Wylogowano pomyslnie.\n";
+                    cout << "Wylogowano pomyslnie.\n";
                     break;
                 case 0:
                     running = false;
@@ -229,6 +235,7 @@ int main() {
     try {
         system.saveUsersToCSV("data/users.csv");
         system.saveVehiclesToCSV("data/vehicles.csv");
+        system.saveTransactionsToCSV("data/transactions.csv");
         
     } catch (const std::exception& e) {
         std::cerr << "Blad podczas zapisu danych do pliku CSV: " << e.what() << "\n";
