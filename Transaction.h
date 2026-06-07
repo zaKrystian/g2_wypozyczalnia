@@ -2,22 +2,49 @@
 #define TRANSACTION_H
 
 #include <string>
-using namespace std;
+#include <iostream>
+
+enum class TransactionStatus {
+    ACTIVE,
+    COMPLETED
+};
 
 class Transaction {
-public:
+private:
     int transactionId;
     int userId;
     int vehicleId;
-    string startDate;
-    string endDate;
+    std::string vehicleBrand;
+    std::string startDate;
+    int rentalDays; 
     int startMileage;
     int endMileage;
     double totalCost;
-    double extraFees;
+    double extraFee;
+    TransactionStatus status;
 
-    Transaction(int tId, int uId, int vId, string sDate, int sMileage);
-    void completeTransaction(string eDate, int eMileage, double cost, double fees);
+public:
+    Transaction(int tId, int uId, int vId, const std::string& brand, const std::string& start, int startMil);
+
+    Transaction(int tId, int uId, int vId, const std::string& brand, const std::string& start, 
+                int days, int startMil, int endMil, double total, double extra, TransactionStatus stat);
+
+    void completeTransaction(int days, int endMil, double total, double extra);
+
+    int getTransactionId() const;
+    int getUserId() const;
+    int getVehicleId() const;
+    std::string getVehicleBrand() const;
+    std::string getStartDate() const;
+    int getRentalDays() const;
+    int getStartMileage() const;
+    int getEndMileage() const;
+    double getTotalCost() const;
+    double getExtraFee() const;
+    TransactionStatus getStatus() const;
+    std::string getStatusAsString() const;
+    
+    void displaySummary() const;
 };
 
 #endif
