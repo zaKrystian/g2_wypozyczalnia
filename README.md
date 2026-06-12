@@ -125,9 +125,6 @@ Klasa `RentalSystem` odpowiada za:
 
 | Klasa         | Odpowiedzialność                                                                     |
 | ------------- | ------------------------------------------------------------------------------------ |
-| `Vehicle`     | Reprezentuje pojazd wraz z jego parametrami technicznymi, przebiegiem oraz statusem. |
-| `User`        | Reprezentuje użytkownika systemu (klienta lub administratora).                       |
-| `Transaction` | Przechowuje informacje o wypożyczeniu, kosztach oraz historii transakcji.            |
 | `Menus`       | Odpowiada za obsługę interfejsu tekstowego i wyświetlanie menu aplikacji.            |
 
 
