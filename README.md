@@ -172,6 +172,7 @@ Do uruchomienia projektu wymagany jest kompilator wspierający standard **C++11*
    # Linux/Mac
    ./wypozyczalnia
    ```
+---
 
 # 👥 Autorzy
 
