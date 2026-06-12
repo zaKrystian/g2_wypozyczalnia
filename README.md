@@ -15,7 +15,7 @@
 - [Struktura danych i klasy](#-struktura-danych-i-klasy)
 - [Struktura plików w repozytorium](#-struktura-plików-w-repozytorium)
 - [Wymagania i uruchomienie](#-wymagania-i-uruchomienie)
-- [Autorzye](#-autorzy)
+- [Autorzy](#-autorzy)
 
 ---
 
