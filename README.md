@@ -5,6 +5,12 @@
   [![Status](https://img.shields.io/badge/Status-Zakonczono-red.svg)]()
 
   *Repozytorium projektu grupy 2 w ramach przedmiotu **PPwC IwIK 2025/2026**.*
+  
+  ### 👥 Autorzy
+
+  - [Krystian Kachniarz](https://github.com/zaKrystian)
+  - Jakub Grzelec
+  - Igor Grabowski
 </div>
 
 ---
@@ -171,3 +177,15 @@ Do uruchomienia projektu wymagany jest kompilator wspierający standard **C++11*
    # Linux/Mac
    ./wypozyczalnia
    ```
+
+# 👥 Autorzy
+
+Projekt został zrealizowany przez:
+
+| Autor | Rola |
+|---------|---------|
+| **Krystian Kachniarz** | Programowanie, architektura systemu, dokumentacja, implementacja głównych funkcji systemu |
+| **Jakub Grzelec** | Implementacja funkcjonalności transakcji |
+| **Igor Grabowski** | Implementacja funkcjonalności użytkownika |
+
+W ramach projektu **„Wypożyczalnia – System Zarządzania Flotą”** realizowanego na potrzeby przedmiotu **PPwC IwIK 2025/2026**.
