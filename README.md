@@ -41,28 +41,95 @@ Aplikacja to konsolowy system do kompleksowego zarządzania flotą pojazdów, po
 
 Architektura aplikacji opiera się na paradygmacie obiektowym (OOP), co zapewnia przejrzysty podział logiki biznesowej i wysoką spójność kodu. System bazuje na relacjach między niezależnymi encjami, które agregują określone zestawy danych. Poniżej znajduje się zestawienie kluczowych struktur wykorzystywanych w projekcie:
 
-<br>
 
-**🚗 Vehicle (Pojazd):** 
+### 🚗 `Vehicle` (Pojazd):
+
 Klasa centralna przechowująca pełny stan pojedynczego samochodu w systemie. Każda instancja agreguje trzy główne kategorie informacji:
 * **Dane pojazdu:** Unikalne ID, marka, model oraz rok produkcji.
 * **Dane eksploatacyjne:** Bieżący przebieg i status techniczny (np. dostępny, wypożyczony, wymaga serwisu).
 * **Dane transakcyjne:** Referencje do historii wypożyczeń, powiązanie z bieżącym klientem (User) oraz szczegóły opłat realizowanych poprzez odrębny obiekt transakcji.
-<br>
 
-**👥 User (Użytkownik):**
+
+### 👥 `User` (Użytkownik):
 Klasa zarządzająca informacjami o podmiotach korzystających z systemu. Implementuje ścisły podział na role, co bezpośrednio warunkuje poziom dostępu do funkcji programu.
 
 * **Identyfikacja:** Unikalne ID użytkownika, dane kontaktowe i uwierzytelniające.
 * **Zarządzanie uprawnieniami:** Wbudowany system ról rozróżniający standardowych klientów dokonujących rezerwacji od administratorów zarządzających flotą.
 * **Historia aktywności:** Przechowywanie wektorów powiązań z aktywnymi oraz zakończonymi transakcjami.
-<br>
 
-**💵 Transaction (Transakcja):**
+
+### 💵 `Transaction` (Transakcja):
 Obiekt pełniący funkcję łącznika między pojadem a użytkownikiem w ściśle określonych ramach czasowych. Gwarantuje integralność danych w procesie wypożyczenia.
 
 * **Parametry czasowe:** Unikalne ID transakcji, data rozpoczęcia oraz planowanego i faktycznego zwrotu pojazdu.
 * **Moduł finansowy:** Obliczanie i przechowywanie informacji o stawce bazowej, naliczonych opłatach dodatkowych, kaucji oraz ostatecznym statusie rozliczenia.
+
+
+
+### 🏷️ `RentalSystem`
+
+Klasa `RentalSystem` pełni rolę centralnego modułu aplikacji. Odpowiada za zarządzanie flotą pojazdów, użytkownikami, transakcjami oraz obsługę procesu wypożyczeń i zwrotów. Zapewnia również mechanizmy logowania oraz trwałego przechowywania danych w plikach CSV.
+
+### Najważniejsze atrybuty
+
+| Atrybut             | Opis                                                      |
+| ------------------- | --------------------------------------------------------- |
+| `vehicles`          | Kolekcja wszystkich pojazdów znajdujących się w systemie. |
+| `users`             | Lista zarejestrowanych użytkowników.                      |
+| `transactions`      | Historia wszystkich transakcji i wypożyczeń.              |
+| `currentUser`       | Wskaźnik na aktualnie zalogowanego użytkownika.           |
+| `nextTransactionId` | Licznik generujący unikalne identyfikatory transakcji.    |
+
+### Metody klasy
+
+| Metoda                                                                                                                    | Opis                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `addVehicle(const Vehicle& v)`                                                                                            | Dodaje pojazd do floty wypożyczalni.                                                                     |
+| `addUser(const User& u)`                                                                                                  | Dodaje nowego użytkownika do systemu.                                                                    |
+| `rentVehicle(int vehicleId, int userId, string date)`                                                                     | Realizuje proces wypożyczenia pojazdu po sprawdzeniu poprawności danych oraz dostępności pojazdu.        |
+| `returnVehicle(int vehicleId, int currentMileage, int days)`                                                              | Obsługuje zwrot pojazdu, aktualizuje przebieg, oblicza koszt wypożyczenia i ewentualne dodatkowe opłaty. |
+| `repairVehicle(int vehicleId)`                                                                                            | Przywraca pojazd znajdujący się w serwisie do stanu dostępnego oraz aktualizuje limit serwisowy.         |
+| `displayFleetStatus() const`                                                                                              | Wyświetla status wszystkich pojazdów znajdujących się w systemie.                                        |
+| `displayFleetStatus(bool displayAvailable) const`                                                                         | Wyświetla wyłącznie pojazdy dostępne do wypożyczenia.                                                    |
+| `displayFleetStatus(bool adminPowers, bool displayUnAvailable) const`                                                     | Wyświetla pojazdy znajdujące się w serwisie lub naprawie.                                                |
+| `displayUsers() const`                                                                                                    | Wyświetla listę wszystkich użytkowników.                                                                 |
+| `displayAllTransactions() const`                                                                                          | Wyświetla pełną historię transakcji (tryb administratora).                                               |
+| `displayUserTransactions(int userId) const`                                                                               | Wyświetla historię wypożyczeń wybranego użytkownika.                                                     |
+| `displayActiveUserTransactions(int userId) const`                                                                         | Wyświetla aktywne wypożyczenia użytkownika.                                                              |
+| `hasActiveTransactions(int userId) const`                                                                                 | Sprawdza, czy użytkownik posiada aktywne wypożyczenia.                                                   |
+| `login(const std::string& username, const std::string& password)`                                                         | Loguje użytkownika do systemu.                                                                           |
+| `logout()`                                                                                                                | Wylogowuje aktualnie zalogowanego użytkownika.                                                           |
+| `getCurrentUser() const`                                                                                                  | Zwraca wskaźnik do aktualnie zalogowanego użytkownika.                                                   |
+| `loadVehiclesFromCSV(const std::string& filename)`                                                                        | Wczytuje bazę pojazdów z pliku CSV.                                                                      |
+| `saveVehiclesToCSV(const std::string& filename) const`                                                                    | Zapisuje bazę pojazdów do pliku CSV.                                                                     |
+| `loadUsersFromCSV(const std::string& filename)`                                                                           | Wczytuje użytkowników z pliku CSV.                                                                       |
+| `saveUsersToCSV(const std::string& filename)`                                                                             | Zapisuje użytkowników do pliku CSV.                                                                      |
+| `loadTransactionsFromCSV(const std::string& filename)`                                                                    | Wczytuje historię transakcji z pliku CSV.                                                                |
+| `saveTransactionsToCSV(const std::string& filename) const`                                                                | Zapisuje historię transakcji do pliku CSV.                                                               |
+| `addNewVehicle(const std::string& brand, const std::string& model, int year, int mileage, int serviceLimit, double rate)` | Tworzy nowy pojazd po przeprowadzeniu walidacji danych i automatycznie nadaje mu identyfikator.          |
+
+### Zakres odpowiedzialności
+
+Klasa `RentalSystem` odpowiada za:
+
+* zarządzanie flotą pojazdów,
+* zarządzanie użytkownikami systemu,
+* obsługę procesu wypożyczenia i zwrotu pojazdu,
+* kontrolę dostępności oraz stanu technicznego pojazdów,
+* prowadzenie historii wypożyczeń i transakcji,
+* uwierzytelnianie użytkowników,
+* zapis i odczyt danych z plików CSV,
+* naliczanie kosztów wypożyczeń oraz dodatkowych opłat za przekroczenie limitów eksploatacyjnych.
+
+### Pozostałe klasy systemu
+
+| Klasa         | Odpowiedzialność                                                                     |
+| ------------- | ------------------------------------------------------------------------------------ |
+| `Vehicle`     | Reprezentuje pojazd wraz z jego parametrami technicznymi, przebiegiem oraz statusem. |
+| `User`        | Reprezentuje użytkownika systemu (klienta lub administratora).                       |
+| `Transaction` | Przechowuje informacje o wypożyczeniu, kosztach oraz historii transakcji.            |
+| `Menus`       | Odpowiada za obsługę interfejsu tekstowego i wyświetlanie menu aplikacji.            |
+
 
 ---
 
