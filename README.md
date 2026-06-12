@@ -5,12 +5,6 @@
   [![Status](https://img.shields.io/badge/Status-Zakonczono-red.svg)]()
 
   *Repozytorium projektu grupy 2 w ramach przedmiotu **PPwC IwIK 2025/2026**.*
-  
-  ### 👥 Autorzy
-
-  - [Krystian Kachniarz](https://github.com/zaKrystian)
-  - Jakub Grzelec
-  - Igor Grabowski
 </div>
 
 ---
@@ -21,6 +15,7 @@
 - [Struktura danych i klasy](#-struktura-danych-i-klasy)
 - [Struktura plików w repozytorium](#-struktura-plików-w-repozytorium)
 - [Wymagania i uruchomienie](#-wymagania-i-uruchomienie)
+- [Autorzye](#-autorzy)
 
 ---
 
