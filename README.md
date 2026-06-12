@@ -38,12 +38,31 @@ Aplikacja to konsolowy system do kompleksowego zarządzania flotą pojazdów, po
 
 # 📦 Struktura danych i klasy
 
-<--- Należy zrobić update -----> 
 
-Każdy obiekt w systemie agreguje:
-*   **Dane pojazdu:** ID, marka, model, rok produkcji.
-*   **Dane eksploatacyjne:** Bieżący przebieg, status techniczny.
-*   **Dane transakcyjne:** Historia wypożyczeń, powiązanie z `User`, opłaty (`Transaction`).
+Architektura aplikacji opiera się na paradygmacie obiektowym (OOP), co zapewnia przejrzysty podział logiki biznesowej i wysoką spójność kodu. System bazuje na relacjach między niezależnymi encjami, które agregują określone zestawy danych. Poniżej znajduje się zestawienie kluczowych struktur wykorzystywanych w projekcie:
+
+<br>
+
+**🚗 Vehicle (Pojazd):** 
+Klasa centralna przechowująca pełny stan pojedynczego samochodu w systemie. Każda instancja agreguje trzy główne kategorie informacji:
+* **Dane pojazdu:** Unikalne ID, marka, model oraz rok produkcji.
+* **Dane eksploatacyjne:** Bieżący przebieg i status techniczny (np. dostępny, wypożyczony, wymaga serwisu).
+* **Dane transakcyjne:** Referencje do historii wypożyczeń, powiązanie z bieżącym klientem (User) oraz szczegóły opłat realizowanych poprzez odrębny obiekt transakcji.
+<br>
+
+**👥 User (Użytkownik):**
+Klasa zarządzająca informacjami o podmiotach korzystających z systemu. Implementuje ścisły podział na role, co bezpośrednio warunkuje poziom dostępu do funkcji programu.
+
+* **Identyfikacja:** Unikalne ID użytkownika, dane kontaktowe i uwierzytelniające.
+* **Zarządzanie uprawnieniami:** Wbudowany system ról rozróżniający standardowych klientów dokonujących rezerwacji od administratorów zarządzających flotą.
+* **Historia aktywności:** Przechowywanie wektorów powiązań z aktywnymi oraz zakończonymi transakcjami.
+<br>
+
+**💵 Transaction (Transakcja):**
+Obiekt pełniący funkcję łącznika między pojadem a użytkownikiem w ściśle określonych ramach czasowych. Gwarantuje integralność danych w procesie wypożyczenia.
+
+* **Parametry czasowe:** Unikalne ID transakcji, data rozpoczęcia oraz planowanego i faktycznego zwrotu pojazdu.
+* **Moduł finansowy:** Obliczanie i przechowywanie informacji o stawce bazowej, naliczonych opłatach dodatkowych, kaucji oraz ostatecznym statusie rozliczenia.
 
 ---
 
